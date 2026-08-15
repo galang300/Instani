@@ -2,7 +2,7 @@ import "dotenv/config";
 
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
-  port: Number(process.env.API_PORT ?? process.env.PORT ?? 4000),
+  port: Number(process.env.PORT ?? process.env.API_PORT ?? 4000),
   databaseUrl: process.env.DATABASE_URL ?? "",
   redisUrl: process.env.REDIS_URL ?? "redis://localhost:6379",
   scraperUrl: process.env.SCRAPER_URL ?? "http://localhost:5000",

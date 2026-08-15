@@ -51,6 +51,8 @@ membutuhkan CSV langsung.
    LLM_MODEL=gpt-4o-mini
    LLM_FALLBACK_ENABLED=true
    ```
+   Jangan set `API_PORT` di Railway. Railway memberi port runtime lewat `PORT`, dan API akan
+   memprioritaskan nilai tersebut agar healthcheck berhasil.
 6. Deploy dan cek endpoint:
    ```text
    https://domain-api/health

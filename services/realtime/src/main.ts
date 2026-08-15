@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import { registerAuctionGateway } from "./auction.gateway.js";
 import { BidService } from "./bid.service.js";
 
-const port = Number(process.env.REALTIME_PORT ?? process.env.PORT ?? 4001);
+const port = Number(process.env.PORT ?? process.env.REALTIME_PORT ?? 4001);
 const httpServer = createServer();
 
 const io = new Server(httpServer, {
