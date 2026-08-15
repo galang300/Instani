@@ -11,7 +11,7 @@ import type {
 import { getStoredPetaniSession, type PetaniSession } from "./auth";
 import { demoPriceReports, demoReferencePrices, demoWeather, heatmapPoints } from "./demo-data";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/+$/, "");
 const DEMO_FALLBACK_ENABLED = process.env.NEXT_PUBLIC_DEMO_FALLBACK !== "false";
 
 export type HargaDashboardStats = {
