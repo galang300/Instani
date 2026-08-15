@@ -22,6 +22,11 @@ type UserResponseInput = {
   ktpRejectionReason?: string | null;
 };
 
+type FarmerApplicationRow = UserResponseInput & {
+  ktpImageDataUrl?: string | null;
+  updatedAt: Date;
+};
+
 function toUserResponse(user: UserResponseInput) {
   const contact = user.contactMethod === "EMAIL" ? user.email : user.phone;
 
@@ -174,7 +179,7 @@ usersRoutes.get("/farmer-applications", async (request, response) => {
   });
 
   response.json(
-    applications.map((application) => ({
+    applications.map((application: FarmerApplicationRow) => ({
       ...application,
       phone: application.phone ?? undefined,
       email: application.email ?? undefined,
