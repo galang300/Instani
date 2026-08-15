@@ -7,7 +7,6 @@ RUN npm config set fetch-retries 5 \
   && npm config set fetch-retry-maxtimeout 120000 \
   && npm config set audit false \
   && npm config set fund false
-RUN --mount=type=cache,id=panganterkini-npm,target=/root/.npm,sharing=locked \
-  npm ci --workspace @panganterkini/realtime --include-workspace-root --prefer-offline
+RUN npm ci --workspace @panganterkini/realtime --include-workspace-root
 EXPOSE 4001
 CMD ["npm", "--workspace", "@panganterkini/realtime", "run", "start"]
