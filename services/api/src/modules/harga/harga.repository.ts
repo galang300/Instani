@@ -38,6 +38,16 @@ type PriceReportInput = Omit<PriceReport, "id" | "createdAt" | "zScore" | "statu
 type ReferencePriceFilters = { province?: string; regency?: string; commodity?: string };
 type ReferenceLookupOptions = { province?: string; regency?: string };
 type CsvReferenceRow = Record<string, string | undefined>;
+type ReferenceProvinceRow = { province: string };
+type ReferenceRegencyRow = { regency: string };
+type ReferenceCommodityRow = { commodity: string };
+type FarmerSummaryRow = {
+  id: string;
+  name: string;
+  username?: string | null;
+  phone?: string | null;
+  email?: string | null;
+};
 
 const REFERENCE_LOW_RATIO = 0.85;
 const REFERENCE_HIGH_RATIO = 1.15;
@@ -1022,9 +1032,9 @@ async function persistedReferenceFilters(options?: { province?: string }) {
   ]);
 
   return {
-    provinces: provinces.map((item) => item.province).filter(Boolean),
-    regencies: regencies.map((item) => item.regency).filter(Boolean),
-    commodities: commodities.map((item) => item.commodity).filter(Boolean)
+    provinces: provinces.map((item: ReferenceProvinceRow) => item.province).filter(Boolean),
+    regencies: regencies.map((item: ReferenceRegencyRow) => item.regency).filter(Boolean),
+    commodities: commodities.map((item: ReferenceCommodityRow) => item.commodity).filter(Boolean)
   };
 }
 
@@ -1169,7 +1179,7 @@ export const hargaRepository = {
       ]);
     }
 
-    const farmerSummaries = farmers.map((farmer) => {
+    const farmerSummaries = farmers.map((farmer: FarmerSummaryRow) => {
       const reports = reportsByFarmer.get(farmer.id) ?? [];
       const summary = buildFarmerPerformanceSummary({
         farmerId: farmer.id,
