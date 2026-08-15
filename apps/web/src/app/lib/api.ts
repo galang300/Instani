@@ -9,8 +9,10 @@ import type {
   ReferencePrice
 } from "@panganterkini/shared-types";
 import { getStoredPetaniSession, type PetaniSession } from "./auth";
+import { demoPriceReports, demoReferencePrices, demoWeather, heatmapPoints } from "./demo-data";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const DEMO_FALLBACK_ENABLED = process.env.NEXT_PUBLIC_DEMO_FALLBACK !== "false";
 
 export type HargaDashboardStats = {
   sampleToday: number;
@@ -86,6 +88,42 @@ export class ApiRequestError extends Error {
 }
 
 export type ContactMethod = "PHONE" | "EMAIL";
+
+function demoHargaStats(): HargaDashboardStats {
+  const anomalyReports = demoPriceReports.filter(
+    (report) => report.status === "LOW" || report.status === "HIGH"
+  );
+
+  const averagePrice = Math.round(
+    demoPriceReports.reduce((sum, report) => sum + report.pricePerKg, 0) /
+      demoPriceReports.length
+  );
+
+  return {
+    sampleToday: demoPriceReports.length,
+    lowPriceCount: demoPriceReports.filter((report) => report.status === "LOW").length,
+    averagePrice,
+    notificationCount: anomalyReports.length,
+    averageSource: "REPORTS_TODAY"
+  };
+}
+
+function filterDemoReferencePrices(filters?: {
+  province?: string;
+  regency?: string;
+  commodity?: string;
+}) {
+  return demoReferencePrices.filter((item) => {
+    const provinceMatches =
+      !filters?.province || item.province.toLowerCase() === filters.province.toLowerCase();
+    const regencyMatches =
+      !filters?.regency || item.regency.toLowerCase() === filters.regency.toLowerCase();
+    const commodityMatches =
+      !filters?.commodity || item.commodity.toLowerCase() === filters.commodity.toLowerCase();
+
+    return provinceMatches && regencyMatches && commodityMatches;
+  });
+}
 
 export type RegisterPetaniPayload = {
   username: string;
@@ -176,27 +214,55 @@ export async function getMyFarmerPerformance() {
 }
 
 export async function getPriceReports() {
-  const response = await fetch(`${API_URL}/api/harga/reports`, {
-    cache: "no-store"
-  });
+  try {
+    const response = await fetch(`${API_URL}/api/harga/reports`, {
+      cache: "no-store"
+    });
 
-  if (!response.ok) {
-    throw new Error("Gagal mengambil laporan harga");
+    if (!response.ok) {
+      throw new Error("Gagal mengambil laporan harga");
+    }
+
+    const reports = (await response.json()) as PriceReport[];
+    if (reports.length > 0 || !DEMO_FALLBACK_ENABLED) {
+      return reports;
+    }
+  } catch {
+    if (!DEMO_FALLBACK_ENABLED) {
+      throw new Error("Gagal mengambil laporan harga");
+    }
   }
 
-  return (await response.json()) as PriceReport[];
+  return demoPriceReports;
 }
 
 export async function getHargaStats() {
-  const response = await fetch(`${API_URL}/api/harga/stats`, {
-    cache: "no-store"
-  });
+  try {
+    const response = await fetch(`${API_URL}/api/harga/stats`, {
+      cache: "no-store"
+    });
 
-  if (!response.ok) {
-    throw new Error("Gagal mengambil statistik harga");
+    if (!response.ok) {
+      throw new Error("Gagal mengambil statistik harga");
+    }
+
+    const stats = (await response.json()) as HargaDashboardStats;
+    const hasData =
+      stats.sampleToday > 0 ||
+      stats.lowPriceCount > 0 ||
+      stats.averagePrice > 0 ||
+      stats.notificationCount > 0;
+
+    if (hasData || !DEMO_FALLBACK_ENABLED) {
+      return stats;
+    }
+  } catch {
+    if (!DEMO_FALLBACK_ENABLED) {
+      throw new Error("Gagal mengambil statistik harga");
+    }
   }
 
-  return (await response.json()) as HargaDashboardStats;
+  return demoHargaStats();
 }
 
 export async function postPriceReport(
@@ -247,15 +313,26 @@ export async function getReferencePrices(filters?: {
   if (filters?.commodity) params.set("commodity", filters.commodity);
 
   const queryString = params.toString();
-  const response = await fetch(`${API_URL}/api/harga/reference${queryString ? `?${queryString}` : ""}`, {
-    cache: "no-store"
-  });
+  try {
+    const response = await fetch(`${API_URL}/api/harga/reference${queryString ? `?${queryString}` : ""}`, {
+      cache: "no-store"
+    });
 
-  if (!response.ok) {
-    throw new Error("Gagal mengambil harga referensi");
+    if (!response.ok) {
+      throw new Error("Gagal mengambil harga referensi");
+    }
+
+    const prices = (await response.json()) as ReferencePrice[];
+    if (prices.length > 0 || !DEMO_FALLBACK_ENABLED) {
+      return prices;
+    }
+  } catch {
+    if (!DEMO_FALLBACK_ENABLED) {
+      throw new Error("Gagal mengambil harga referensi");
+    }
   }
 
-  return (await response.json()) as ReferencePrice[];
+  return filterDemoReferencePrices(filters);
 }
 
 export type ReferencePriceFilters = {
@@ -269,16 +346,37 @@ export async function getReferencePriceFilters(filters?: { province?: string }) 
   if (filters?.province) params.set("province", filters.province);
 
   const queryString = params.toString();
-  const response = await fetch(
-    `${API_URL}/api/harga/reference/filters${queryString ? `?${queryString}` : ""}`,
-    { cache: "no-store" }
-  );
+  try {
+    const response = await fetch(
+      `${API_URL}/api/harga/reference/filters${queryString ? `?${queryString}` : ""}`,
+      { cache: "no-store" }
+    );
 
-  if (!response.ok) {
-    throw new Error("Gagal mengambil filter harga referensi");
+    if (!response.ok) {
+      throw new Error("Gagal mengambil filter harga referensi");
+    }
+
+    const nextFilters = (await response.json()) as ReferencePriceFilters;
+    const hasData =
+      nextFilters.provinces.length > 0 ||
+      nextFilters.regencies.length > 0 ||
+      nextFilters.commodities.length > 0;
+
+    if (hasData || !DEMO_FALLBACK_ENABLED) {
+      return nextFilters;
+    }
+  } catch {
+    if (!DEMO_FALLBACK_ENABLED) {
+      throw new Error("Gagal mengambil filter harga referensi");
+    }
   }
 
-  return (await response.json()) as ReferencePriceFilters;
+  const prices = filterDemoReferencePrices(filters);
+  return {
+    provinces: Array.from(new Set(demoReferencePrices.map((item) => item.province))).sort(),
+    regencies: Array.from(new Set(prices.map((item) => item.regency))).sort(),
+    commodities: Array.from(new Set(demoReferencePrices.map((item) => String(item.commodity)))).sort()
+  };
 }
 
 export async function consultAgent(payload: {
@@ -288,48 +386,112 @@ export async function consultAgent(payload: {
   latitude?: number;
   longitude?: number;
 }) {
-  const response = await fetch(`${API_URL}/api/agent/consult`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const response = await fetch(`${API_URL}/api/agent/consult`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  if (!response.ok) {
-    throw new Error(await apiError(response, "Gagal memproses konsultasi RAG"));
+    if (!response.ok) {
+      throw new Error(await apiError(response, "Gagal memproses konsultasi RAG"));
+    }
+
+    return (await response.json()) as {
+      answer: string;
+      context?: {
+        weather?: unknown;
+        prices?: unknown[];
+        anomalies?: unknown[];
+        recentReports?: unknown[];
+        reportSummary?: {
+          scope: "LOCATION" | "ALL_REPORTS_FALLBACK";
+          totalReports: number;
+          todayReports: number;
+          anomalyReports: number;
+          lowReports: number;
+          highReports: number;
+          averagePrice: number | null;
+        };
+        location?: string;
+      };
+    };
+  } catch {
+    if (!DEMO_FALLBACK_ENABLED) {
+      throw new Error("Gagal memproses konsultasi RAG");
+    }
   }
 
-  return (await response.json()) as {
-    answer: string;
-    context?: {
-      weather?: unknown;
-      prices?: unknown[];
-      anomalies?: unknown[];
-      recentReports?: unknown[];
-      reportSummary?: {
-        scope: "LOCATION" | "ALL_REPORTS_FALLBACK";
-        totalReports: number;
-        todayReports: number;
-        anomalyReports: number;
-        lowReports: number;
-        highReports: number;
-        averagePrice: number | null;
-      };
-      location?: string;
-    };
+  const anomalyReports = demoPriceReports.filter(
+    (report) => report.status === "LOW" || report.status === "HIGH"
+  );
+
+  return {
+    answer:
+      "Mode demo aktif karena API publik belum tersambung. Berdasarkan data contoh Sidoarjo, terdapat " +
+      `${anomalyReports.length} laporan anomali: ` +
+      `${anomalyReports.filter((report) => report.status === "LOW").length} LOW dan ` +
+      `${anomalyReports.filter((report) => report.status === "HIGH").length} HIGH. ` +
+      "Harga acuan dan cuaca tetap ditampilkan sebagai simulasi prototype lomba.",
+    context: {
+      weather: {
+        temperature: demoWeather.temperature,
+        condition: demoWeather.weatherCondition
+      },
+      prices: demoReferencePrices,
+      anomalies: anomalyReports,
+      recentReports: demoPriceReports,
+      reportSummary: {
+        scope: "LOCATION" as const,
+        totalReports: demoPriceReports.length,
+        todayReports: demoPriceReports.length,
+        anomalyReports: anomalyReports.length,
+        lowReports: anomalyReports.filter((report) => report.status === "LOW").length,
+        highReports: anomalyReports.filter((report) => report.status === "HIGH").length,
+        averagePrice: demoHargaStats().averagePrice
+      },
+      location: `${payload.city_regency ?? "Sidoarjo"}, ${payload.province ?? "Jawa Timur"}`
+    }
   };
 }
 
 export async function getAgentQuickPrompts() {
-  const response = await fetch(`${API_URL}/api/agent/quick-prompts`, {
-    cache: "no-store"
-  });
+  try {
+    const response = await fetch(`${API_URL}/api/agent/quick-prompts`, {
+      cache: "no-store"
+    });
 
-  if (!response.ok) {
-    throw new Error("Gagal mengambil quick prompts");
+    if (!response.ok) {
+      throw new Error("Gagal mengambil quick prompts");
+    }
+
+    return (await response.json()) as {
+      prompts: Array<{ id: string; label: string; question: string }>;
+    };
+  } catch {
+    if (!DEMO_FALLBACK_ENABLED) {
+      throw new Error("Gagal mengambil quick prompts");
+    }
   }
 
-  return (await response.json()) as {
-    prompts: Array<{ id: string; label: string; question: string }>;
+  return {
+    prompts: [
+      {
+        id: "demo-anomaly",
+        label: "Anomali hari ini",
+        question: "Berapa laporan harga anomali di daerah saya?"
+      },
+      {
+        id: "demo-cabai",
+        label: "Harga cabai",
+        question: "Rata-rata harga cabai rawit di daerah saya berapa?"
+      },
+      {
+        id: "demo-cuaca",
+        label: "Saran cuaca",
+        question: "Cuaca hari ini cocok untuk aktivitas tani apa?"
+      }
+    ]
   };
 }
 
@@ -345,37 +507,65 @@ export async function getHargaWithWeather(filters: {
   if (filters.latitude !== undefined) params.set("latitude", filters.latitude.toString());
   if (filters.longitude !== undefined) params.set("longitude", filters.longitude.toString());
 
-  const response = await fetch(`${API_URL}/api/harga/with-weather?${params.toString()}`, {
-    cache: "no-store"
-  });
+  try {
+    const response = await fetch(`${API_URL}/api/harga/with-weather?${params.toString()}`, {
+      cache: "no-store"
+    });
 
-  if (!response.ok) {
-    throw new Error("Gagal mengambil data cuaca");
+    if (!response.ok) {
+      throw new Error("Gagal mengambil data cuaca");
+    }
+
+    const weatherPayload = (await response.json()) as {
+      weather?: {
+        temperature: number;
+        humidity: number;
+        weatherCondition: string;
+        windSpeed: number;
+        recommendation: string;
+        timestamp: string;
+        location?: string;
+      } | null;
+    };
+
+    if (weatherPayload.weather || !DEMO_FALLBACK_ENABLED) {
+      return weatherPayload;
+    }
+  } catch {
+    if (!DEMO_FALLBACK_ENABLED) {
+      throw new Error("Gagal mengambil data cuaca");
+    }
   }
 
-  return (await response.json()) as {
-    weather?: {
-      temperature: number;
-      humidity: number;
-      weatherCondition: string;
-      windSpeed: number;
-      recommendation: string;
-      timestamp: string;
-      location?: string;
-    } | null;
+  return {
+    weather: {
+      ...demoWeather,
+      location: `${filters.city ?? "Sidoarjo"}, ${filters.province ?? "Jawa Timur"}`
+    }
   };
 }
 
 export async function getHeatmapPoints() {
-  const response = await fetch(`${API_URL}/api/harga/heatmap`, {
-    cache: "no-store"
-  });
+  try {
+    const response = await fetch(`${API_URL}/api/harga/heatmap`, {
+      cache: "no-store"
+    });
 
-  if (!response.ok) {
-    throw new Error("Gagal mengambil peta harga");
+    if (!response.ok) {
+      throw new Error("Gagal mengambil peta harga");
+    }
+
+    const points = (await response.json()) as HeatmapPoint[];
+    if (points.length > 0 || !DEMO_FALLBACK_ENABLED) {
+      return points;
+    }
+  } catch {
+    if (!DEMO_FALLBACK_ENABLED) {
+      throw new Error("Gagal mengambil peta harga");
+    }
   }
 
-  return (await response.json()) as HeatmapPoint[];
+  return heatmapPoints;
 }
 
 export async function getAuctions() {
