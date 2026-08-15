@@ -112,6 +112,25 @@ function inferRequestedCommodities(
   );
 }
 
+type AgentReportRow = {
+  commodity: string;
+  pricePerKg: number;
+  district: string;
+  status: string;
+  createdAt: Date;
+};
+
+type CommodityReportSummary = {
+  commodity: string;
+  prices: number[];
+  lowCount: number;
+  highCount: number;
+  normalCount: number;
+  latestPrice: number;
+  latestStatus: string;
+  latestAt: string;
+};
+
 async function gatherMarketSignals(
   province: string,
   city: string,
@@ -147,7 +166,7 @@ async function gatherMarketSignals(
       ...(locationConditions.length ? { OR: locationConditions } : {})
     };
 
-    const reports = await prisma.priceReport.findMany({
+    const reports = (await prisma.priceReport.findMany({
       where,
       orderBy: { createdAt: "desc" },
       take: 300,
@@ -158,12 +177,12 @@ async function gatherMarketSignals(
         status: true,
         createdAt: true
       }
-    });
+    })) as AgentReportRow[];
 
     const usesLocationReports = reports.length > 0 || !city;
-    const reportsForSummary = usesLocationReports
+    const reportsForSummary: AgentReportRow[] = usesLocationReports
       ? reports
-      : await prisma.priceReport.findMany({
+      : ((await prisma.priceReport.findMany({
           where: commodityWhere,
           orderBy: { createdAt: "desc" },
           take: 300,
@@ -174,21 +193,9 @@ async function gatherMarketSignals(
             status: true,
             createdAt: true
           }
-        });
+        })) as AgentReportRow[]);
 
-    const summaryByCommodity = new Map<
-      string,
-      {
-        commodity: string;
-        prices: number[];
-        lowCount: number;
-        highCount: number;
-        normalCount: number;
-        latestPrice: number;
-        latestStatus: string;
-        latestAt: string;
-      }
-    >();
+    const summaryByCommodity = new Map<string, CommodityReportSummary>();
 
     for (const report of reportsForSummary) {
       const key = report.commodity.toLowerCase();
@@ -219,11 +226,11 @@ async function gatherMarketSignals(
       summaryByCommodity.set(key, current);
     }
 
-    const byCommodity = Array.from(summaryByCommodity.values()).map((item) => ({
+    const byCommodity = Array.from(summaryByCommodity.values()).map((item: CommodityReportSummary) => ({
       commodity: item.commodity,
       count: item.prices.length,
       averagePrice: Math.round(
-        item.prices.reduce((total, price) => total + price, 0) / item.prices.length
+        item.prices.reduce((total: number, price: number) => total + price, 0) / item.prices.length
       ),
       minPrice: Math.min(...item.prices),
       maxPrice: Math.max(...item.prices),
@@ -236,17 +243,22 @@ async function gatherMarketSignals(
     }));
 
     const totalReports = reportsForSummary.length;
-    const lowReports = reportsForSummary.filter((item) => item.status === "LOW").length;
-    const highReports = reportsForSummary.filter((item) => item.status === "HIGH").length;
-    const normalReports = reportsForSummary.filter((item) => item.status === "NORMAL").length;
+    const lowReports = reportsForSummary.filter((item: AgentReportRow) => item.status === "LOW").length;
+    const highReports = reportsForSummary.filter((item: AgentReportRow) => item.status === "HIGH").length;
+    const normalReports = reportsForSummary.filter((item: AgentReportRow) => item.status === "NORMAL").length;
     const insufficientDataReports = reportsForSummary.filter(
-      (item) => item.status === "INSUFFICIENT_DATA"
+      (item: AgentReportRow) => item.status === "INSUFFICIENT_DATA"
     ).length;
-    const todayReports = reportsForSummary.filter((item) => item.createdAt >= startOfToday).length;
+    const todayReports = reportsForSummary.filter(
+      (item: AgentReportRow) => item.createdAt >= startOfToday
+    ).length;
     const averagePrice =
       totalReports > 0
         ? Math.round(
-            reportsForSummary.reduce((total, item) => total + item.pricePerKg, 0) / totalReports
+            reportsForSummary.reduce(
+              (total: number, item: AgentReportRow) => total + item.pricePerKg,
+              0
+            ) / totalReports
           )
         : null;
 
@@ -262,7 +274,7 @@ async function gatherMarketSignals(
 
     return {
       anomalies,
-      recentReports: reportsForSummary.slice(0, 8).map((item) => ({
+      recentReports: reportsForSummary.slice(0, 8).map((item: AgentReportRow) => ({
         commodity: item.commodity,
         pricePerKg: item.pricePerKg,
         district: item.district,

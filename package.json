@@ -25,8 +25,10 @@
     "dev:realtime": "npm --workspace @panganterkini/realtime run dev",
     "dev:worker": "npm --workspace @panganterkini/worker run dev",
     "build:web": "npm --workspace @panganterkini/web run build",
+    "build:admin": "npm --workspace @panganterkini/admin run build",
+    "build:all": "npm --workspaces --if-present run build",
     "typecheck:web": "npm --workspace @panganterkini/web run typecheck",
-    "build": "npm --workspaces --if-present run build",
+    "build": "npm run build:web && npm run build:admin",
     "typecheck": "npm --workspaces --if-present run typecheck",
     "lint": "npm --workspaces --if-present run lint"
   }

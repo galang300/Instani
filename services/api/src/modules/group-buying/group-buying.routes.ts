@@ -16,6 +16,8 @@ type StoredGroupBuyingOrder = Awaited<ReturnType<typeof prisma.groupBuyingOrder.
   }>;
 };
 
+type GroupBuyingCommitmentRow = StoredGroupBuyingOrder["commitments"][number];
+
 function calculateProgressPercent(targetKg: number, committedKg: number) {
   if (targetKg <= 0 || committedKg <= 0) return 0;
 
@@ -41,7 +43,7 @@ function toGroupBuyingOrder(record: StoredGroupBuyingOrder) {
     createdAt: record.createdAt.toISOString(),
     progressPercent,
     commitmentCount: record.commitments.length,
-    commitments: record.commitments.slice(0, 5).map((commitment) => ({
+    commitments: record.commitments.slice(0, 5).map((commitment: GroupBuyingCommitmentRow) => ({
       id: commitment.id,
       orderId: commitment.orderId,
       buyerId: commitment.buyerId,
