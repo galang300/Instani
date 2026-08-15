@@ -3,7 +3,7 @@
 import { Crosshair, MapPin, Mic, Send, WifiOff } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { ApiRequestError, getReferencePrices, postPriceReport } from "../../lib/api";
+import { ApiRequestError, getReferencePriceFilters, postPriceReport } from "../../lib/api";
 import {
   clearPetaniSession,
   getStoredPetaniSession,
@@ -87,10 +87,8 @@ export function PriceInputForm() {
   useEffect(() => {
     async function loadCommodities() {
       try {
-        const referencePrices = await getReferencePrices();
-        const nextCommodities = Array.from(
-          new Set(referencePrices.map((item) => String(item.commodity)))
-        );
+        const filters = await getReferencePriceFilters();
+        const nextCommodities = filters.commodities ?? [];
         setCommodities(nextCommodities);
         setCommodity((current) => current || nextCommodities[0] || "");
       } catch {
