@@ -61,3 +61,5 @@ Catatan penting:
   fokus ke web responsive.
 - Jangan isi secret asli di `.env.example`. Simpan secret produksi langsung di dashboard Vercel
   atau secret manager backend.
+
+Panduan backend publik tersedia di `docs/backend-deployment.md`.

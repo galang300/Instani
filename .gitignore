@@ -13,4 +13,6 @@ __pycache__/
 .venv/
 .DS_Store
 data/
+!services/api/data/
+!services/api/data/*.csv
 uploads/

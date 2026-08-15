@@ -1,4 +1,5 @@
 apps/mobile/
+services/api/data/
 .env
 .env.local
 coverage/
