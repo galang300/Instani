@@ -1310,22 +1310,19 @@ export const hargaRepository = {
       // Fallback saat koneksi database belum siap
     }
 
-    const csvPrices = await csvReferencePrices();
+    const csvPrices = await readCsvReferencePrices();
     const livePrices = csvPrices.length > 0 ? [] : await fetchPihpsReferencePrices();
     const fallbackPrices = csvPrices.length > 0 ? csvPrices : livePrices;
+    const scopedPrices = fallbackPrices.filter((item) =>
+      options?.province
+        ? item.province.toLowerCase() === options.province.toLowerCase()
+        : true
+    );
     const provinces = Array.from(new Set(fallbackPrices.map((item) => item.province))).sort();
     const regencies = Array.from(
-      new Set(
-        fallbackPrices
-          .filter((item) =>
-            options?.province
-              ? item.province.toLowerCase() === options.province.toLowerCase()
-              : true
-          )
-          .map((item) => item.regency)
-      )
+      new Set(scopedPrices.map((item) => item.regency))
     ).sort();
-    const commodities = Array.from(new Set(fallbackPrices.map((item) => item.commodity))).sort();
+    const commodities = Array.from(new Set(scopedPrices.map((item) => item.commodity))).sort();
 
     return { provinces, regencies, commodities };
   },
