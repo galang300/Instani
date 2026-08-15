@@ -32,6 +32,8 @@ membutuhkan CSV langsung.
 4. Buat service `api` dari Dockerfile:
    - Root repo: `.`
    - Dockerfile path: `services/api/Dockerfile`
+   - Jika Railway meminta path absolut, isi `/services/api/Dockerfile`.
+   - Repo juga sudah menyediakan `railway.json` untuk memaksa builder Dockerfile.
    - Start command:
      ```bash
      npx prisma db push --schema services/api/prisma/schema.prisma --accept-data-loss && npm --workspace @panganterkini/api run start
