@@ -3,6 +3,16 @@
  */
 import { prisma } from "../../database/prisma.js";
 
+type PriceTimeSeriesRow = {
+  pricePerKg: number;
+  sampledAt: Date;
+};
+
+type PriceTimeSeriesPoint = {
+  price: number;
+  date: Date;
+};
+
 /**
  * Ambil harga PIHPS terbaru untuk komoditas tertentu
  */
@@ -87,7 +97,7 @@ export async function createReportWithPihps(
 export async function getPriceTimeSeriesData(
   commodity: string,
   options?: { province?: string; regency?: string }
-) {
+): Promise<PriceTimeSeriesPoint[]> {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -110,7 +120,7 @@ export async function getPriceTimeSeriesData(
     select: { pricePerKg: true, sampledAt: true }
   });
 
-  return records.map((r) => ({
+  return records.map((r: PriceTimeSeriesRow) => ({
     price: r.pricePerKg,
     date: r.sampledAt
   }));
@@ -131,13 +141,14 @@ export async function calculateAnomalySummary(commodity: string) {
     };
   }
 
-  const prices = timeSeries.map((t) => t.price);
-  const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
-  const variance = prices.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / prices.length;
+  const prices: number[] = timeSeries.map((t: PriceTimeSeriesPoint) => t.price);
+  const mean = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
+  const variance =
+    prices.reduce((a: number, b: number) => a + Math.pow(b - mean, 2), 0) / prices.length;
   const stdDev = Math.sqrt(variance);
 
   // Calculate IQR
-  const sorted = [...prices].sort((a, b) => a - b);
+  const sorted = [...prices].sort((a: number, b: number) => a - b);
   const q1Index = Math.floor(sorted.length * 0.25);
   const q3Index = Math.floor(sorted.length * 0.75);
   const q1 = sorted[q1Index];

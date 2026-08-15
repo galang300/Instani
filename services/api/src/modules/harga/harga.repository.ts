@@ -41,6 +41,10 @@ type CsvReferenceRow = Record<string, string | undefined>;
 type ReferenceProvinceRow = { province: string };
 type ReferenceRegencyRow = { regency: string };
 type ReferenceCommodityRow = { commodity: string };
+type ReferenceCandidateRow = {
+  commodity: string;
+  pricePerKg: number;
+};
 type FarmerSummaryRow = {
   id: string;
   name: string;
@@ -632,7 +636,7 @@ async function latestReferenceForCommodity(
       }
     });
 
-    const storedCandidate = candidates.find((candidate) => {
+    const storedCandidate = candidates.find((candidate: ReferenceCandidateRow) => {
       const normalizedCandidate = normalizeCommodityName(candidate.commodity);
       return (
         normalizedCandidate.includes(normalizedCommodity) ||
