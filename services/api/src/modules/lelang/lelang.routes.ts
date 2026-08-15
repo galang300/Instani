@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { Router, type Request } from "express";
 import { verifyAuthToken, type AuthUserToken } from "../../common/auth.js";
 import { prisma } from "../../database/prisma.js";
@@ -268,7 +269,7 @@ lelangRoutes.post("/:id/close", async (request, response) => {
 
   const winningBid = auction.bids[0];
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.auction.update({
       where: { id: auction.id },
       data: {

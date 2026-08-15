@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { Router, type Request } from "express";
 import { verifyAuthToken } from "../../common/auth.js";
 import { prisma } from "../../database/prisma.js";
@@ -166,7 +167,7 @@ groupBuyingRoutes.post("/:id/commit", async (request, response) => {
     return;
   }
 
-  const updatedOrder = await prisma.$transaction(async (tx) => {
+  const updatedOrder = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const acceptedKg = Math.min(kg, remainingKg);
     const nextCommittedKg = Math.min(order.targetKg, order.committedKg + acceptedKg);
     await tx.groupBuyingCommitment.create({
