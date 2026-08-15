@@ -1,0 +1,6 @@
+apps/mobile/
+.env
+.env.local
+coverage/
+uploads/
+*.log

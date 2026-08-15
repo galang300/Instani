@@ -1,0 +1,33 @@
+{
+  "name": "panganterkini",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo MVP sistem transparansi harga pangan berbasis input petani, Z-Score, WhatsApp, dan peta harga.",
+  "packageManager": "npm@10.8.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "apps/web",
+    "apps/admin",
+    "services/api",
+    "services/realtime",
+    "services/worker",
+    "packages/shared-types",
+    "packages/validation",
+    "packages/ui",
+    "packages/config"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @panganterkini/web run dev",
+    "dev:admin": "npm --workspace @panganterkini/admin run dev",
+    "dev:api": "npm --workspace @panganterkini/api run dev",
+    "dev:realtime": "npm --workspace @panganterkini/realtime run dev",
+    "dev:worker": "npm --workspace @panganterkini/worker run dev",
+    "build:web": "npm --workspace @panganterkini/web run build",
+    "typecheck:web": "npm --workspace @panganterkini/web run typecheck",
+    "build": "npm --workspaces --if-present run build",
+    "typecheck": "npm --workspaces --if-present run typecheck",
+    "lint": "npm --workspaces --if-present run lint"
+  }
+}

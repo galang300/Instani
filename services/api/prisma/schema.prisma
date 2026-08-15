@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PETANI
+  TENGKULAK
+  ADMIN
+  PENYULUH
+}
+
+enum VerificationStatus {
+  PENDING
+  OTP_VERIFIED
+  GAPOKTAN_VERIFIED
+  KTP_VERIFIED
+  KTP_REJECTED
+}
+
+enum ContactMethod {
+  PHONE
+  EMAIL
+}
+
+enum PriceSource {
+  WEB
+  WHATSAPP
+  MOBILE
+  SCRAPER
+  ADMIN
+}
+
+enum PriceStatus {
+  LOW
+  NORMAL
+  HIGH
+  INSUFFICIENT_DATA
+}
+
+enum AuctionStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  name               String
+  username           String?            @unique
+  passwordHash       String?
+  phone              String?            @unique
+  email              String?            @unique
+  contactMethod      ContactMethod      @default(PHONE)
+  ktpImageName       String?
+  ktpImageDataUrl    String?
+  ktpRejectionReason String?
+  role               UserRole
+  verificationStatus VerificationStatus @default(PENDING)
+  gapoktanId         String?
+  gapoktan           Gapoktan?          @relation(fields: [gapoktanId], references: [id])
+  priceReports       PriceReport[]
+  auctions           Auction[]          @relation("AuctionOwner")
+  bids               Bid[]
+  transactionsBought Transaction[]      @relation("TransactionBuyer")
+  transactionsSold   Transaction[]      @relation("TransactionSeller")
+  groupCommitments   GroupBuyingCommitment[]
+  ratingsGiven       Rating[]           @relation("RatingAuthor")
+  ratingsReceived    Rating[]           @relation("RatingTarget")
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model Gapoktan {
+  id        String   @id @default(cuid())
+  name      String
+  district  String
+  village   String?
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+model PriceReport {
+  id            String      @id @default(cuid())
+  commodity     String
+  pricePerKg    Int
+  volumeKg      Float
+  district      String
+  village       String?
+  source        PriceSource
+  latitude      Decimal
+  longitude     Decimal
+  zScore        Float?
+  status        PriceStatus @default(INSUFFICIENT_DATA)
+  reporterId    String?
+  reporter      User?       @relation(fields: [reporterId], references: [id])
+  createdAt     DateTime    @default(now())
+
+  @@index([commodity, district, createdAt])
+}
+
+model PriceReference {
+  id         String   @id @default(cuid())
+  commodity  String
+  pricePerKg Int
+  source     String
+  province   String
+  regency    String
+  sampledAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@unique([commodity, source, sampledAt, province, regency])
+  @@index([commodity, source, sampledAt])
+}
+
+model Auction {
+  id          String        @id @default(cuid())
+  commodity   String
+  quantityKg  Float
+  floorPrice  Int
+  district    String
+  status      AuctionStatus @default(DRAFT)
+  ownerId     String
+  owner       User          @relation("AuctionOwner", fields: [ownerId], references: [id])
+  bids        Bid[]
+  transaction Transaction?
+  createdAt   DateTime      @default(now())
+  closedAt    DateTime?
+}
+
+model Bid {
+  id         String   @id @default(cuid())
+  auctionId  String
+  auction    Auction  @relation(fields: [auctionId], references: [id])
+  bidderId   String
+  bidder     User     @relation(fields: [bidderId], references: [id])
+  pricePerKg Int
+  quantityKg Float
+  createdAt  DateTime @default(now())
+
+  @@index([auctionId, pricePerKg])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  auctionId   String   @unique
+  auction     Auction  @relation(fields: [auctionId], references: [id])
+  buyerId     String?
+  buyer       User?    @relation("TransactionBuyer", fields: [buyerId], references: [id])
+  sellerId    String?
+  seller      User?    @relation("TransactionSeller", fields: [sellerId], references: [id])
+  status      String
+  totalAmount Int
+  receipt     Receipt?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Rating {
+  id                 String   @id @default(cuid())
+  authorId           String
+  author             User     @relation("RatingAuthor", fields: [authorId], references: [id])
+  targetId           String
+  target             User     @relation("RatingTarget", fields: [targetId], references: [id])
+  score              Int
+  note               String?
+  performanceLabel   String?
+  benefitTitle       String?
+  benefitDescription String?
+  benefitValue       Int?
+  benefitStatus      String?
+  createdAt          DateTime @default(now())
+
+  @@index([targetId, createdAt])
+  @@index([authorId, createdAt])
+}
+
+model Receipt {
+  id            String      @id @default(cuid())
+  transactionId String      @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  pdfUrl        String?
+  whatsappSent  Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+}
+
+model GroupBuyingOrder {
+  id            String   @id @default(cuid())
+  commodity     String
+  targetKg      Float
+  committedKg   Float    @default(0)
+  pickupPoint   String
+  deadlineAt    DateTime
+  status        String
+  commitments   GroupBuyingCommitment[]
+  createdAt     DateTime @default(now())
+}
+
+model GroupBuyingCommitment {
+  id        String            @id @default(cuid())
+  orderId   String
+  order     GroupBuyingOrder  @relation(fields: [orderId], references: [id])
+  buyerId   String
+  buyer     User              @relation(fields: [buyerId], references: [id])
+  kg        Float
+  createdAt DateTime          @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([buyerId, createdAt])
+}
+
+model NotificationLog {
+  id        String   @id @default(cuid())
+  channel   String
+  target    String
+  payload   Json
+  status    String
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@panganterkini/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@panganterkini/shared-types": "file:../../packages/shared-types",
+    "bullmq": "^5.24.2",
+    "dotenv": "^16.4.7",
+    "ioredis": "^5.4.2",
+    "tsx": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.6.3"
+  }
+}
