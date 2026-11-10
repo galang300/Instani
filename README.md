@@ -6,6 +6,25 @@ Monorepo MVP ini dirancang sebagai infrastruktur sistem terintegrasi skala nasio
 >
 > 📁 Proyek ini juga merupakan bagian dari portofolio saya untuk melamar magang — seluruh arsitektur, implementasi, dan dokumentasinya saya kembangkan sendiri silang dengan beberapa kontributor kampus.
 
+## Live demo
+
+[![Dashboard Instani](gambar/dasboard.png)](gambar/dasboard.png)
+
+🔗 **Coba langsung:** `<URL-WEB-DEMO>` *(deploy aktif; instance free/relay akan butuh ±30 detik untuk spin-up saat pertama dibuka)*
+
+> Karena berjalan di VM/server free-tier, resposansi pertama mungkin lebih lambat — refresh sekali lagi bila halaman masih memuat.
+
+### Akun demo (untuk recruiter/reviewer)
+
+Fitur bisa langsung dicoba tanpa input data pribadi. Gunakan akun demo berikut:
+
+| Peran | Login → halaman | Email | Password |
+|---|---|---|---|
+| 🌱 **Petani** (input harga, lelang panen, HPP, anomali) | Masuk → `/petani` | `galang1@mail.com` | `user123` |
+| 🛒 **Pembeli/tengkulak** (bid lelang, group buying, transaksi) | Masuk → `/pembeli` | `faiz@mail.com` | `faiz123` |
+
+> ℹ️ Ini **akun demo sengaja dibuka** untuk keperluan reviewing portofolio open-source — bukan kredensial produksi. Jika kamu fork/deploy sendiri, silakan buat akun baru via halaman Daftar atau isi `ADMIN_EMAIL`/`ADMIN_PASSWORD` di `.env` untuk dashboard admin.
+
 ## Isi proyek
 
 - `apps/web`: portal pengguna PWA berbasis Next.js, Tailwind, IndexedDB, Web Speech API, dan Leaflet.
@@ -101,7 +120,7 @@ curl -X POST http://localhost:4000/api/harga/reference/sync
 
 Setelah sinkronisasi, `GET /api/harga/reference` akan membaca data terbaru dari tabel `PriceReference`; jika database belum siap, endpoint tetap fallback ke cache scraper PIHPS.
 
-## Roadmap PKM
+## Fitur - FITUR
 
 1. MVP lapangan: harga, input petani, Z-Score/IQR, warning harga rendah, WhatsApp bot.
 2. Offline-first, heatmap, kalkulator HPP.
