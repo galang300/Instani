@@ -14,8 +14,8 @@ dan `ADMIN_PASSWORD`) akan membuat admin pertama.
 
 ```json
 {
-  "identifier": "admin@panganterkini.local",
-  "password": "admin12345"
+  "identifier": "email-admin-anda",
+  "password": "password-admin-anda-dari-env"
 }
 ```
 

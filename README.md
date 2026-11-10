@@ -1,6 +1,10 @@
 # PanganTerkini
 
-Monorepo MVP untuk proposal PKM transparansi harga pangan di Tulungagung. Sistem ini menyiapkan input harga petani via web/mobile/WhatsApp, deteksi anomali Z-Score/IQR/MAD, warning harga rendah, peta harga, kalkulator HPP, realtime lelang, dan fondasi integrasi Bapanas/PIHPS.
+Monorepo MVP ini dirancang sebagai infrastruktur sistem terintegrasi skala nasional untuk wewujudkan transparansi harga pangan dari tingkat petani hingga konsumen. Platform ini menghubungkan rantai pasok pangan secara real-time, memetakan disparitas harga antar wilayah, serta mendeteksi anomali pasar untuk mendukung keputusan taktis dan kebijakan publik.
+
+> 🏆 **Highlight:** Proyek ini lolos seleksi tingkat universitas (Telkom University) dan masuk babak penyisihan grup GEMASTIK tahun ini.
+>
+> 📁 Proyek ini juga merupakan bagian dari portofolio saya untuk melamar magang — seluruh arsitektur, implementasi, dan dokumentasinya saya kembangkan sendiri silang dengan beberapa kontributor kampus.
 
 ## Isi proyek
 
@@ -28,6 +32,14 @@ Opsional untuk dependency lokal:
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
+
+Sebelum menjalankan, siapkan environment:
+
+```bash
+cp .env.example .env
+```
+
+Isi `LLM_API_KEY` dan token provider di `.env` milikmu sendiri. File `.env` sudah dikecualikan dari git dan dari build image Docker (lihat `.gitignore` & `.dockerignore`), jadi secret tidak akan ikut ter-commit atau ter-bundle ke dalam image.
 
 Jalankan semua container:
 
